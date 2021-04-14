@@ -3,7 +3,8 @@
     <div class="main">
       <div class="main-links">
         <nuxt-link to="/">Home</nuxt-link>|
-        <nuxt-link to="login">Login</nuxt-link>|
+        <div @click="logout" v-if="loggedIn" class="logout-link">Logout</div>
+        <nuxt-link to="login" v-else>Login</nuxt-link>|
         <nuxt-link to="secret">Secret</nuxt-link>
       </div>
     </div>
@@ -11,7 +12,50 @@
   </div>
 </template>
 
+<script>
+import firebase from 'firebase/app'
+import 'firebase/auth'
+import Cookies from 'js-cookie'
+
+export default {
+  mounted() {
+    this.setupFireBase();
+  },
+  data() {
+    return {
+      loggedIn: false
+    }
+  },
+  methods: {
+    logout () {
+      firebase.auth().signOut().then(() => {
+        this.$router.push("/login");
+      })
+    },
+    setupFireBase() {
+      firebase.auth().onAuthStateChanged(user => {
+        if(user) {
+          this.loggedIn = true;
+          firebase.auth().currentUser.getIdToken(true)
+            .then(token => {
+              Cookies.set('access_token', token)
+            })
+        } else {
+          this.loggedIn = false;
+          Cookies.remove('access_token')
+        }
+      })
+    }
+  }
+}
+</script>
+
 <style>
+.logout-link {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #551a8b;
+}
 .main {
   margin: 20px;
   display: flex;
